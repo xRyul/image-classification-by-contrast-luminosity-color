@@ -1,7 +1,7 @@
 # 1. ALL filenames with the same SKU are put into set
-# 2. Each set is then analysed for contrast: Low, Medium, High 
+# 2. Each set is then analysed for contrast: Low, Medium, High 85++
 #   - This allows to keep all images together e.g.: _01 will not be seperated from _02 and _03 
-# 3. 
+# 3. Show output inCLI
 
 import numpy as np
 import os
@@ -33,25 +33,31 @@ def clean_filename(filename):
 
 
 def calculate_std_dev(filename):
-    # Open the image file
-    with Image.open(filename) as img:
-        # Convert the image to grayscale
-        img = img.convert('L')
-        # Convert the image data to a numpy array
-        img_data = np.array(img)
-        # Flatten the image data
-        img_data_flattened = img_data.flatten()
+    try:
+        # Open the image file
+        with Image.open(filename) as img:
+            # Convert the image to grayscale
+            img = img.convert('L')
+            # Convert the image data to a numpy array
+            img_data = np.array(img)
+            # Flatten the image data
+            img_data_flattened = img_data.flatten()
 
-    std_dev = np.std(img_data_flattened)
+        std_dev = np.std(img_data_flattened)
 
-    return std_dev
+        return std_dev
+    except OSError:
+        print(f"Skipping broken file: {filename}")
+        return None
 
 
 def process_image(filename):
     sku = clean_filename(filename)
     std_dev = calculate_std_dev(filename)
-    return sku, std_dev
-
+    if std_dev is not None:
+        return sku, std_dev
+    else:
+        return None, None
 
 def categorize_psd_images(folders):
     # Initialize dictionaries to store SKU counts and files
@@ -73,7 +79,8 @@ def categorize_psd_images(folders):
 
         # Add the results to the dictionary
         for sku, std_dev in results:
-            sku_std_devs[sku].append(std_dev)
+            if sku is not None and std_dev is not None:
+                sku_std_devs[sku].append(std_dev)
 
         # Now calculate the average standard deviation for each SKU and print the categorization result
         low_contrast = 0
@@ -96,7 +103,7 @@ if __name__ == '__main__':
     start_time = time.time()
 
     # Call the function
-    folders = ['/Users/dan00477/Desktop/2_files']
+    folders = ['/Volumes/Hams Hall Workspace/R2_StyleShoot1_WIP']
     categorize_psd_images(folders)
 
     # Print the total execution time
