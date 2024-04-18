@@ -11,6 +11,7 @@ from PIL import Image
 import multiprocessing
 import time
 
+
 def clean_filename(filename):
     # Remove file extension
     cleaned_filename = re.sub(r'\.\w+$', '', filename)
@@ -30,6 +31,7 @@ def clean_filename(filename):
 
     return sku
 
+
 def calculate_std_dev(filename):
     # Calculate Std Dev
     with open(filename, 'rb') as f:
@@ -40,10 +42,12 @@ def calculate_std_dev(filename):
 
     return std_dev
 
+
 def process_image(filename):
     sku = clean_filename(filename)
     std_dev = calculate_std_dev(filename)
     return sku, std_dev
+
 
 def categorize_psd_images(folder_path):
     # Initialize dictionaries to store SKU counts and files
