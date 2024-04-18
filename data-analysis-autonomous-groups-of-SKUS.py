@@ -1,7 +1,12 @@
-# 1. ALL filenames with the same SKU are put into set
-# 2. Each set is then analysed for contrast: Low, Medium, High 
-#   - This allows to keep all images together e.g.: _01 will not be seperated from _02 and _03 
-# 3. 
+# Below code will process folder of images and categorise into subfolders
+# based on 10 points of standard devation variance
+
+# THIS is OPTIMIZED FOR SKUs e.g.: 12345678_01.jpg, 12345678_02.jpg
+# so that iamges would be moved in sets/groups! 
+
+# Adjust "interval" value as needed.
+# - the lower the number then small the variance, the more folders will be created
+# - the higher the number the bigger the variance, the less folders will be created
 
 import numpy as np
 import os
@@ -10,6 +15,7 @@ from collections import defaultdict
 from PIL import Image
 import multiprocessing
 import time
+import shutil
 
 
 def clean_filename(filename):
@@ -53,6 +59,7 @@ def process_image(filename):
     return sku, std_dev
 
 
+
 def categorize_psd_images(folders):
     # Initialize dictionaries to store SKU counts and files
     sku_std_devs = defaultdict(list)
@@ -76,19 +83,37 @@ def categorize_psd_images(folders):
             sku_std_devs[sku].append(std_dev)
 
         # Now calculate the average standard deviation for each SKU and print the categorization result
-        low_contrast = 0
-        medium_contrast = 0
-        high_contrast = 0
+        std_dev_values = []
         for sku, std_devs in sku_std_devs.items():
             avg_std_dev = sum(std_devs) / len(std_devs)
-            if avg_std_dev <= 40:
-                low_contrast += 1
-            elif avg_std_dev >= 85:
-                high_contrast += 1
-            else:
-                medium_contrast += 1
+            std_dev_values.append(avg_std_dev)
 
-        print(f"{folder_path}: {low_contrast} Low Contrast, {medium_contrast} Medium Contrast, {high_contrast} High Contrast")
+        # Calculate the minimum and maximum standard deviation
+        min_std_dev = min(std_dev_values)
+        max_std_dev = max(std_dev_values)
+
+        # Calculate the interval
+        interval = 40
+
+        # Create the subfolders if they don't exist and move the image files to the subfolders
+        for sku, std_devs in sku_std_devs.items():
+            avg_std_dev = sum(std_devs) / len(std_devs)
+            for filename in image_files:
+                if sku in filename:
+                    # Determine the category based on the average standard deviation
+                    category = int(avg_std_dev // interval) * interval
+                    # Create the subfolder if it doesn't exist
+                    subfolder_path = os.path.join(folder_path, f"category-{category}-{category + interval - 1}")
+                    os.makedirs(subfolder_path, exist_ok=True)
+                    # Move the image file to the subfolder
+                    shutil.move(filename, subfolder_path)
+
+        # Print the number of images in each category
+        for i in range(int(min_std_dev // interval), int(max_std_dev // interval) + 1):
+            subfolder_path = os.path.join(folder_path, f"category-{i * interval}-{i * interval + interval - 1}")
+            if os.path.exists(subfolder_path):
+                print(f"{subfolder_path}: {len(os.listdir(subfolder_path))} images")
+
 
 # Call the function
 if __name__ == '__main__':
