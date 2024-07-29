@@ -1,13 +1,14 @@
 # Image Classification based on contrast, luminosity or color  
-<img width="572" alt="Before classification and after image classification" src="https://github.com/user-attachments/assets/687bb021-83e4-4635-8aa3-969b4533ca30">
+<img width="572" alt="Before classification and after image classification" src="https://github.com/user-attachments/assets/687bb021-83e4-4635-8aa3-969b4533ca30">  
 
 <br>
+</br>
 
-Image classification through the quantitative analysis of RGB values, utilizing metrics such as contrast (standard deviation of pixel intensities), luminosity (average brightness), and color attributes (hue, saturation, and lightness) for categorization, without relying on AI or machine learning techniques. This process involves processing a directory of images, analyzing their visual attributes, and then copying and organizing them into subdirectories based on these attributes.
+Process directory of images, analyze their attributes (luminosity, color, and standard deviation), then COPY (or MOVE) and categorize them into subdirectories based on those attributes.
 
-- Standard Deviation (for contrast) - Measured by the standard deviation of pixel values.
+- Standard Deviation (for contrast)
 - Luminosity (Based on the most dominant color 0 - 255)
-- HSL (mainly for hue)  
+- HSL (mainly for hue)
 
 
 ## Benefits:
