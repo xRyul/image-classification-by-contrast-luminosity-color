@@ -1,4 +1,7 @@
 # Image Classification based on contrast, luminosity or color  
+<img width="572" alt="Before classification and after image classification" src="https://github.com/user-attachments/assets/687bb021-83e4-4635-8aa3-969b4533ca30">
+
+<br>
 
 Process a directory of images, analyze their attributes (luminosity, color, and standard deviation), then COPY and categorize them into subdirectories based on those attributes.
 
