@@ -1,7 +1,7 @@
 """
 
 This script processes a directory of images, analyzes their attributes (luminosity, 
-color, and standard deviation), then COPIES and categorizes them into subdirectories based on 
+color, and standard deviation), then categorizes them into subdirectories based on 
 these attributes.
 
 Key features:
@@ -10,8 +10,7 @@ Key features:
 - Offers optional recursive directory scanning
 
 Usage:
-Modify the input_folder, output_folder, and other parameters in the main() function 
-before running the script.
+Modify the input_folder, output_folder, and other parameters before running the script.
 
 ability to find all PINK images from the batch of 100,000.
 Or find all Black and white images from the set of all color images etc.
