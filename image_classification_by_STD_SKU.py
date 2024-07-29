@@ -1,4 +1,5 @@
-# CONTRAST ANALYSIS (based on std_dev)
+# CONTRAST ANALYSIS (based on std_dev) - SKU optimised
+# E.g.: keep alss _01 _02 skus together
 
 # Below code will process folder of images and categorise into subfolders
 # based on 30 points of standard devation variance
