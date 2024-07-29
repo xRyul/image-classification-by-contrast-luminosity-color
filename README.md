@@ -3,11 +3,12 @@
 
 <br>
 
-Process a directory of images, analyze their attributes (luminosity, color, and standard deviation), then COPY and categorize them into subdirectories based on those attributes.
+Image classification through the quantitative analysis of RGB values, utilizing metrics such as contrast (standard deviation of pixel intensities), luminosity (average brightness), and color attributes (hue, saturation, and lightness) for categorization, without relying on AI or machine learning techniques. This process involves processing a directory of images, analyzing their visual attributes, and then copying and organizing them into subdirectories based on these attributes.
 
-- Standard Deviation (for contrast)
+- Standard Deviation (for contrast) - Measured by the standard deviation of pixel values.
 - Luminosity (Based on the most dominant color 0 - 255)
-- HSL
+- HSL (mainly for hue)  
+
 
 ## Benefits:
 
