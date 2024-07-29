@@ -55,6 +55,7 @@ Each subdirectory would contain copies of the images that fall into that categor
 
 """
 
+
 import os
 import time
 import shutil
@@ -63,15 +64,41 @@ from multiprocessing import Pool
 import numpy as np
 from PIL import Image
 
+# Configuration constants
+INPUT_FOLDER = "/Users/dan00477/Desktop/untitled folder 2 2"
+OUTPUT_FOLDER = "/Users/dan00477/Desktop/output"
+RECURSIVE = True
+DELETE_ORIGINALS = False
+
+# Categorization intervals
+LUMINOSITY_INTERVAL = 60
+HUE_INTERVAL = 10
+STD_INTERVAL = 60
+
+# File extensions to process
+IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.psd', '.tif', '.tiff')
+
 def process_image(path):
     try:
         with Image.open(path) as img:
-            img_data = np.array(img)
+            # Convert image to RGBA if it's not already
+            img = img.convert('RGBA')
+
+            # Create a white background
+            background = Image.new('RGBA', img.size, (255, 255, 255))
+            
+            # Composite the image onto the white background
+            composite = Image.alpha_composite(background, img)
+            
+            # Convert to RGB for further processing
+            rgb_img = composite.convert('RGB')
+            
+            img_data = np.array(rgb_img)
             
             # Remove alpha channel if present
             if img_data.shape[2] == 4:
                 img_data = img_data[:, :, :3]
-            
+
             # Calculate luminosity
             # (0.299, 0.587, and 0.114) are coefficients used in a standard formula 
             # for calculating the luminosity or perceived brightness of a color.
@@ -86,14 +113,11 @@ def process_image(path):
             luminosity = np.dot(img_data[..., :3], [0.299, 0.587, 0.114])
             avg_luminosity = np.mean(luminosity)
             
-            # Calculate standard deviation
             std_dev = np.std(img_data)
             
-            # Calculate average color
             img_data_normalized = img_data.astype(np.float32) / 255
             avg_color = np.mean(img_data_normalized, axis=(0, 1))
             
-            # Convert to HLS and get hue category
             try:
                 h, _, _ = colorsys.rgb_to_hls(*avg_color)
                 color_category = int(h * 360)
@@ -105,65 +129,64 @@ def process_image(path):
         print(f"Failed to process {path}, error: {e}")
         return None
 
-def process_directory(folder_path, recursive=True):
-    image_extensions = ('.png', '.jpg', '.jpeg', '.psd', '.tif', '.tiff')
+def get_image_paths(folder_path, recursive=True):
     image_paths = []
     
     for root, _, files in os.walk(folder_path):
         image_paths.extend(
             os.path.join(root, file)
             for file in files
-            if file.lower().endswith(image_extensions)
+            if file.lower().endswith(IMAGE_EXTENSIONS)
         )
         if not recursive:
             break
+
+    return image_paths
+
+def process_directory(folder_path, recursive=True):
+    image_paths = get_image_paths(folder_path, recursive)
 
     with Pool() as pool:
         results = pool.map(process_image, image_paths)
 
     return [result for result in results if result is not None]
 
-def categorize_and_copy_images(results, output_folder, hue_variance=40, std_variance=40):
+def categorize_image(path, luminosity, std, color_category, output_folder):
+    luminosity_category = (luminosity // LUMINOSITY_INTERVAL) * LUMINOSITY_INTERVAL
+    std_category = (std // STD_INTERVAL) * STD_INTERVAL
+    hue_category = (color_category // HUE_INTERVAL) * HUE_INTERVAL if color_category is not None else None
+    
+    subfolders = {
+        "Luminosity": f"{luminosity_category}-{luminosity_category + LUMINOSITY_INTERVAL - 1}",
+        "std": f"{std_category}-{std_category + STD_INTERVAL - 1}",
+        "hue": f"{hue_category}-{hue_category + HUE_INTERVAL - 1}" if hue_category is not None else "Unknown"
+    }
+
+    for category, subfolder in subfolders.items():
+        full_path = os.path.join(output_folder, category, subfolder)
+        os.makedirs(full_path, exist_ok=True)
+        if DELETE_ORIGINALS:
+            shutil.move(path, full_path)
+        else:
+            shutil.copy(path, full_path)
+
+def categorize_and_copy_images(results, output_folder):
     os.makedirs(output_folder, exist_ok=True)
 
-    luminosity_ranges = range(0, 256, 25)
-    hue_categories = range(0, 361, hue_variance)
-    
-    for path, luminosity, std, color_category in results:
-        luminosity_category = next((r for r in luminosity_ranges if r <= luminosity < r + 25), None)
-        if luminosity_category is None:
-            print(f"Luminosity {luminosity} for {path} is out of range. Skipping.")
-            continue
-
-        std_category = (std // std_variance) * std_variance
-        hue_category = next((c for c in hue_categories if c <= color_category < c + hue_variance), None)
-        
-        if hue_category is None:
-            print(f"Hue {color_category} for {path} is out of range. Skipping.")
-            continue
-
-        subfolders = {
-            "Luminosity": f"{luminosity_category}-{luminosity_category + 24}",
-            "std": f"{std_category}-{std_category + std_variance - 1}",
-            "hue": f"{hue_category}-{hue_category + hue_variance - 1}"
-        }
-
-        for category, subfolder in subfolders.items():
-            full_path = os.path.join(output_folder, category, subfolder)
-            os.makedirs(full_path, exist_ok=True)
-            shutil.copy(path, full_path)
+    for result in results:
+        if result is not None:
+            path, luminosity, std, color_category = result
+            categorize_image(path, luminosity, std, color_category, output_folder)
 
 def main():
     start_time = time.time()
-    input_folder = "/Users/dan00477/Desktop/untitled folder 2 2"
-    output_folder = "./test-data"
-    recursive = True
 
-    results = process_directory(input_folder, recursive=recursive)
-    categorize_and_copy_images(results, output_folder, hue_variance=40, std_variance=40)
+    results = process_directory(INPUT_FOLDER, recursive=RECURSIVE)
+    categorize_and_copy_images(results, OUTPUT_FOLDER)
 
     duration = time.time() - start_time
     print(f"Processing completed in {duration:.2f} seconds")
+    print(f"{'Moved' if DELETE_ORIGINALS else 'Copied'} images to {OUTPUT_FOLDER}")
 
 if __name__ == "__main__":
     main()
